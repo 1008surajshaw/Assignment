@@ -14,7 +14,7 @@ export default async function Home() {
         </div>
       ) : (
         <p className="text-xl mb-4">
-          Please <Link href="/auth/signin" className="text-blue-500 hover:text-blue-600">sign in</Link> to access all features.
+          Please sign up first to access all features.
         </p>
       )}
     </div>
