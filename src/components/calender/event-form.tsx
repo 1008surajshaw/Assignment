@@ -26,7 +26,7 @@ export default function EventForm({ selectedDate, onEventCreated, editingEvent }
     endTime: "",
     tags: [] as string[],
     isMeeting: false,
-    meetingType: "",
+    meetingType: null as string | null,
     location: "",
     virtualLink: "",
   });
@@ -43,6 +43,7 @@ export default function EventForm({ selectedDate, onEventCreated, editingEvent }
         ...editingEvent,
         startTime: formatDateTimeForInput(editingEvent.startTime),
         endTime: editingEvent.endTime ? formatDateTimeForInput(editingEvent.endTime) : "",
+        meetingType: editingEvent.meetingType || null,
       });
     } else if (selectedDate) {
       setFormData(prev => ({
@@ -63,7 +64,13 @@ export default function EventForm({ selectedDate, onEventCreated, editingEvent }
   };
 
   const handleSwitchChange = (checked: boolean) => {
-    setFormData(prev => ({ ...prev, isMeeting: checked }));
+    setFormData(prev => ({ 
+      ...prev, 
+      isMeeting: checked,
+      meetingType: checked ? prev.meetingType : null,
+      location: checked ? prev.location : "",
+      virtualLink: checked ? prev.virtualLink : "",
+    }));
   };
 
   const handleTagChange = (tag: string) => {
@@ -84,16 +91,21 @@ export default function EventForm({ selectedDate, onEventCreated, editingEvent }
       const method = editingEvent ? 'PUT' : 'POST';
       console.log(`Sending ${method} request to ${url}`);
 
+      const eventData = {
+        ...formData,
+        startTime: new Date(formData.startTime).toISOString(),
+        endTime: formData.endTime ? new Date(formData.endTime).toISOString() : undefined,
+      };
+
+      // Remove meetingType, location, and virtualLink if it's not a meeting
+      
+
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          startTime: new Date(formData.startTime).toISOString(),
-          endTime: formData.endTime ? new Date(formData.endTime).toISOString() : undefined,
-        }),
+        body: JSON.stringify(eventData),
       });
 
       console.log("Response status:", response.status);
@@ -200,7 +212,7 @@ export default function EventForm({ selectedDate, onEventCreated, editingEvent }
             <select
               id="meetingType"
               name="meetingType"
-              value={formData.meetingType}
+              value={formData.meetingType || ""}
               onChange={handleInputChange}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
             >

@@ -29,107 +29,106 @@ interface Event {
 }
 
 export default function CalendarPage() {
-  const [date, setDate] = useState<Date | undefined>(new Date())
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [events, setEvents] = useState<Event[]>([])
-  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
-  const [reminderTimes, setReminderTimes] = useState<{ [key: string]: number }>({})
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [reminderTimes, setReminderTimes] = useState<{ [key: string]: number }>({});
 
-  const { data: session } = useSession()
-  const userId = session?.user?.id 
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
 
   useEffect(() => {
     if (userId) {
-      fetchEvents()
+      fetchEvents();
     }
-  }, [userId])
+  }, [userId]);
 
+  // Fetch events only after component is fully mounted
   const fetchEvents = async () => {
     if (!userId) return;
-    
+
     try {
-      const response = await fetch(`/api/events?userId=${userId}`)
-      
+      const response = await fetch(`/api/events?userId=${userId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch events')
+        throw new Error('Failed to fetch events');
       }
       const data = await response.json();
-      console.log(data, "data is this ")
-      setEvents(data)
-      
-      // Initialize reminder times
-      const initialReminderTimes: { [key: string]: number } = {}
+      setEvents(data);
+
+      const initialReminderTimes: { [key: string]: number } = {};
       data.forEach((event: Event) => {
         if (event.reminders.length > 0) {
-          const reminderTime = parseISO(event.reminders[0].time)
-          const eventTime = parseISO(event.startTime)
-          const diffInMinutes = Math.round((eventTime.getTime() - reminderTime.getTime()) / (1000 * 60))
-          initialReminderTimes[event.id] = diffInMinutes
+          const reminderTime = parseISO(event.reminders[0].time);
+          const eventTime = parseISO(event.startTime);
+          const diffInMinutes = Math.round((eventTime.getTime() - reminderTime.getTime()) / (1000 * 60));
+          initialReminderTimes[event.id] = diffInMinutes;
         } else {
-          initialReminderTimes[event.id] = 30 // Default to 30 minutes
+          initialReminderTimes[event.id] = 30; // Default to 30 minutes
         }
-      })
-      setReminderTimes(initialReminderTimes)
+      });
+      // Update state after processing data
+      setReminderTimes(initialReminderTimes);
     } catch (error) {
-      console.error('Error fetching events:', error)
+      console.error('Error fetching events:', error);
       toast({
-        title: "Error",
-        description: "Failed to fetch events. Please try again.",
-        variant: "destructive",
-      })
+        title: 'Error',
+        description: 'Failed to fetch events. Please try again.',
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
   const handleSelect = (selectedDate: Date | undefined) => {
-    setDate(selectedDate)
-    setIsDialogOpen(true)
-    setEditingEvent(null)
-  }
+    setDate(selectedDate);
+    setIsDialogOpen(true);
+    setEditingEvent(null);
+  };
 
   const handleEventCreated = (savedEvent: Event) => {
-    setIsDialogOpen(false)
+    setIsDialogOpen(false);
     if (editingEvent) {
-      setEvents(prevEvents => prevEvents.map(event => 
-        event.id === savedEvent.id ? savedEvent : event
-      ))
+      setEvents((prevEvents) =>
+        prevEvents.map((event) => (event.id === savedEvent.id ? savedEvent : event))
+      );
     } else {
-      setEvents(prevEvents => [...prevEvents, savedEvent])
+      setEvents((prevEvents) => [...prevEvents, savedEvent]);
     }
-    setEditingEvent(null)
-  }
+    setEditingEvent(null);
+  };
 
   const handleEditEvent = (event: Event) => {
-    setEditingEvent(event)
-    setIsDialogOpen(true)
-  }
+    setEditingEvent(event);
+    setIsDialogOpen(true);
+  };
 
   const handleDeleteEvent = async (eventId: string) => {
     try {
       const response = await fetch(`/api/events?id=${eventId}`, {
         method: 'DELETE',
-      })
+      });
       if (!response.ok) {
-        throw new Error('Failed to delete event')
+        throw new Error('Failed to delete event');
       }
       toast({
-        title: "Event deleted",
-        description: "The event has been successfully deleted.",
-      })
-      setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId))
+        title: 'Event deleted',
+        description: 'The event has been successfully deleted.',
+      });
+      setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
     } catch (error) {
-      console.error('Error deleting event:', error)
+      console.error('Error deleting event:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete event. Please try again.",
-        variant: "destructive",
-      })
+        title: 'Error',
+        description: 'Failed to delete event. Please try again.',
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
   const toggleNotification = async (eventId: string, hasNotification: boolean) => {
     try {
       const method = hasNotification ? 'DELETE' : 'POST';
-      const event = events.find(e => e.id === eventId);
+      const event = events.find((e) => e.id === eventId);
       if (!event) throw new Error('Event not found');
 
       const reminderTime = subMinutes(new Date(event.startTime), reminderTimes[eventId] || 30).toISOString();
@@ -138,66 +137,28 @@ export default function CalendarPage() {
       if (!response.ok) {
         throw new Error('Failed to toggle notification');
       }
-      
-      setEvents(prevEvents => prevEvents.map(event => 
-        event.id === eventId
-          ? {
-              ...event,
-              reminders: hasNotification 
-                ? [] 
-                : [{ id: 'temp-id', time: reminderTime }]
-            }
-          : event
-      ));
+
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.id === eventId
+            ? {
+                ...event,
+                reminders: hasNotification ? [] : [{ id: 'temp-id', time: reminderTime }],
+              }
+            : event
+        )
+      );
 
       toast({
-        title: hasNotification ? "Notification removed" : "Notification set",
+        title: hasNotification ? 'Notification removed' : 'Notification set',
         description: `Notification for "${event.title}" has been ${hasNotification ? 'removed' : 'set'}.`,
       });
     } catch (error) {
       console.error('Error toggling notification:', error);
       toast({
-        title: "Error",
-        description: "Failed to toggle notification. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleReminderTimeChange = async (eventId: string, minutes: number) => {
-    setReminderTimes(prev => ({ ...prev, [eventId]: minutes }))
-    
-    const event = events.find(e => e.id === eventId);
-    if (!event || event.reminders.length === 0) return;
-
-    try {
-      const reminderTime = subMinutes(new Date(event.startTime), minutes).toISOString();
-      const response = await fetch(`/api/reminders?eventId=${eventId}&reminderTime=${reminderTime}`, { 
-        method: 'PUT'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to update reminder time');
-      }
-      
-      setEvents(prevEvents => prevEvents.map(event => 
-        event.id === eventId
-          ? {
-              ...event,
-              reminders: [{ ...event.reminders[0], time: reminderTime }]
-            }
-          : event
-      ));
-
-      toast({
-        title: "Reminder updated",
-        description: `Reminder for "${event.title}" has been updated to ${minutes} minutes before the event.`,
-      });
-    } catch (error) {
-      console.error('Error updating reminder time:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update reminder time. Please try again.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to toggle notification. Please try again.',
+        variant: 'destructive',
       });
     }
   };
@@ -257,11 +218,11 @@ export default function CalendarPage() {
               <TableCell>
                 <div className="flex flex-col items-start space-y-2">
                   <Switch
-                    checked={event.reminders.length > 0}
+                    checked={event.reminders?.length > 0}
                     onCheckedChange={(checked) => toggleNotification(event.id, !checked)}
-                    className={event.reminders.length > 0 ? "bg-green-500" : ""}
+                    className={event.reminders?.length > 0 ? "bg-green-500" : ""}
                   />
-                  {event.reminders.length > 0 && (
+                  {event.reminders && event.reminders?.length > 0 && (
                     <div className="flex items-center space-x-2">
                       <Input
                         type="number"

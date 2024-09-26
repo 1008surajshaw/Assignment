@@ -80,7 +80,11 @@ export async function GET(request: Request) {
       const event = await prisma.event.findMany({
         where: { userId:userId },
         include:{
-          reminders:true
+          reminders:{
+            select:{
+              id:true,
+            }
+          }
         }
       })
       if (!event) {
