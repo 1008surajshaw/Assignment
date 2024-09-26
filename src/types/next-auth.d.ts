@@ -11,8 +11,3 @@ declare module "next-auth" {
   }
 }
 
-//  interface EventSearch {
-//   tags:string[],
-//   status:string[],
-//   remainders :
-//  }

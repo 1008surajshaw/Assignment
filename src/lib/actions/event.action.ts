@@ -4,27 +4,6 @@ import { getServerSession } from "next-auth/next";
 
 const prisma = new PrismaClient();
 
-// export const getAllEventsStatus = (async (data:any) =>{
-//     const gvents = prisma.event.findMany({
-//       where:{
-//         id:id,
-//         status:status
-//       },select:{
-//         startTime:true,
-//         endTime:true,
-//         status:true,
-//         tags:true,
-//         createdAt:true,
-//       }
-//     })
-//    try{
-
-//    }
-//    catch(error){
-    
-//    }
-// })
-
 
 
 export async function getEvents(userId: string) {

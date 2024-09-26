@@ -78,7 +78,10 @@ export async function GET(request: Request) {
   if (userId) {
     try {
       const event = await prisma.event.findMany({
-        where: { userId:userId }
+        where: { userId:userId },
+        include:{
+          reminders:true
+        }
       })
       if (!event) {
         return NextResponse.json({ error: 'Event not found' }, { status: 404 })

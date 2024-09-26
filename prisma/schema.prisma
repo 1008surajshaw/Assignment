@@ -65,7 +65,7 @@ enum Tag {
   SOCIAL
   EDUCATION
   OTHER
-  MEETING // Added MEETING tag
+  MEETING 
 }
 
 enum EventStatus {
