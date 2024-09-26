@@ -7,6 +7,15 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     console.log(body,"body")
+    
+    const user = await prisma.user.findUnique({
+      where: { id: body.userId }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
     const event = await prisma.event.create({
       data: {
         title: body.title,
