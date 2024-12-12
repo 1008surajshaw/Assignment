@@ -12,29 +12,30 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
 
     async signIn(signInProps) {
-      let { user} = signInProps;
+      let { user, account, profile } = signInProps;
 
-        const {  email, name, image } = user;
+       if(account?.provider === 'google' && profile){
 
-        let existingUser = await prisma.user.findFirst({
-          where: {
-             email: email!,
-          },
-        });
-
-
-        if (!existingUser) {
-          existingUser = await prisma.user.create({
-            data: {
-              email: email as string,
-              name: name as string,
-              image:image || 'https://avatars.githubusercontent.com/u/124599?v=4',
-              emailVerified:  new Date(),
-            },
-          });
-        }
-   
-
+         const {  email, name, image } = user;
+       
+         let existingUser = await prisma.user.findFirst({
+           where: {
+              email: email!,
+           },
+         });
+ 
+ 
+         if (!existingUser) {
+           existingUser = await prisma.user.create({
+             data: {
+               email: email as string,
+               name: name as string,
+               image:image || 'https://avatars.githubusercontent.com/u/124599?v=4',
+               emailVerified:  new Date(),
+             },
+           });
+         }
+       }
       return true;
     },
 
