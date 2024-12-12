@@ -84,12 +84,10 @@ export default function EventForm({ selectedDate, onEventCreated, editingEvent }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting form with values:", formData);
 
     try {
       const url = editingEvent ? `/api/events?id=${editingEvent.id}` : '/api/events';
       const method = editingEvent ? 'PUT' : 'POST';
-      console.log(`Sending ${method} request to ${url}`);
 
       const eventData = {
         ...formData,
@@ -108,9 +106,7 @@ export default function EventForm({ selectedDate, onEventCreated, editingEvent }
         body: JSON.stringify(eventData),
       });
 
-      console.log("Response status:", response.status);
       const responseData = await response.json();
-      console.log("Response data:", responseData);
 
       if (!response.ok) {
         throw new Error(`Failed to save event: ${responseData.message || response.statusText}`);
@@ -122,7 +118,6 @@ export default function EventForm({ selectedDate, onEventCreated, editingEvent }
       });
       onEventCreated(responseData);
     } catch (error) {
-      console.error('Error saving event:', error);
       toast({
         title: "Error",
         description: `Failed to ${editingEvent ? 'update' : 'create'} event. Please try again.`,

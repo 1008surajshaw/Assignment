@@ -1,5 +1,4 @@
 import CalendarPage from '@/components/calender/CalenderPage'
-import React from 'react'
 
 const Calender = () => {
   return (

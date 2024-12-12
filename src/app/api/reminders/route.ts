@@ -28,7 +28,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(notification);
   } catch (error) {
-    console.error('Error creating notification:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
@@ -58,7 +57,6 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ message: 'Notification deleted successfully' });
   } catch (error) {
-    console.error('Error deleting notification:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

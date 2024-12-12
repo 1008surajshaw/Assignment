@@ -12,6 +12,7 @@ import { toast } from '@/components/ui/use-toast'
 import { useSession } from 'next-auth/react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { format, subMinutes, addMinutes, parseISO } from 'date-fns'
+import { LoadingSpinner } from '../common/loading-spinner'
 
 interface Event {
   id: string
@@ -31,6 +32,7 @@ interface Event {
 export default function CalendarPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [loading,setLoading] = useState<boolean>(false);
   const [events, setEvents] = useState<Event[]>([]);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [reminderTimes, setReminderTimes] = useState<{ [key: string]: number }>({});
@@ -39,6 +41,7 @@ export default function CalendarPage() {
   const userId = session?.user?.id;
 
   useEffect(() => {
+    
     if (userId) {
       fetchEvents();
     }
@@ -47,7 +50,7 @@ export default function CalendarPage() {
   // Fetch events only after component is fully mounted
   const fetchEvents = async () => {
     if (!userId) return;
-
+    setLoading(true);
     try {
       const response = await fetch(`/api/events?userId=${userId}`);
       if (!response.ok) {
@@ -55,7 +58,8 @@ export default function CalendarPage() {
       }
       const data = await response.json();
       setEvents(data);
-
+      setLoading(false);
+      
       const initialReminderTimes: { [key: string]: number } = {};
       data.forEach((event: Event) => {
         if (event.reminders.length > 0) {
@@ -70,7 +74,6 @@ export default function CalendarPage() {
       // Update state after processing data
       setReminderTimes(initialReminderTimes);
     } catch (error) {
-      console.error('Error fetching events:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch events. Please try again.',
@@ -116,7 +119,6 @@ export default function CalendarPage() {
       });
       setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
     } catch (error) {
-      console.error('Error deleting event:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete event. Please try again.',
@@ -154,7 +156,6 @@ export default function CalendarPage() {
         description: `Notification for "${event.title}" has been ${hasNotification ? 'removed' : 'set'}.`,
       });
     } catch (error) {
-      console.error('Error toggling notification:', error);
       toast({
         title: 'Error',
         description: 'Failed to toggle notification. Please try again.',
@@ -197,7 +198,10 @@ export default function CalendarPage() {
         </DialogContent>
       </Dialog>
       <h2 className="text-xl font-bold mb-4">Your Events</h2>
-      <Table>
+      {loading ? (
+        <LoadingSpinner/>
+      ):(<>
+         <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
@@ -246,6 +250,8 @@ export default function CalendarPage() {
           ))}
         </TableBody>
       </Table>
+      </>)}
+     
     </div>
   )
 }

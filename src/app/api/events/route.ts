@@ -6,7 +6,6 @@ const prisma = new PrismaClient()
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    console.log(body,"body")
     
     const user = await prisma.user.findUnique({
       where: { id: body.userId }
@@ -32,7 +31,6 @@ export async function POST(request: Request) {
     })
     return NextResponse.json(event)
   } catch (error) {
-    console.error('Error creating event:', error)
     return NextResponse.json({ error: 'Error creating event' }, { status: 500 })
   }
 }
@@ -63,16 +61,13 @@ export async function PUT(request: Request) {
       })
       return NextResponse.json(updatedEvent)
     } catch (error) {
-      console.error('Error updating event:', error)
       return NextResponse.json({ error: 'Error updating event' }, { status: 500 })
     }
   }
 
 export async function GET(request: Request) {
-  console.log("one")
   const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
-    console.log(searchParams)
 
 
   if (userId) {
@@ -92,7 +87,6 @@ export async function GET(request: Request) {
       }
       return NextResponse.json(event)
     } catch (error) {
-      console.error('Error fetching event:', error)
       return NextResponse.json({ error: 'Error fetching event' }, { status: 500 })
     }
   } else {
@@ -100,27 +94,60 @@ export async function GET(request: Request) {
       const events = await prisma.event.findMany()
       return NextResponse.json(events)
     } catch (error) {
-      console.error('Error fetching events:', error)
       return NextResponse.json({ error: 'Error fetching events' }, { status: 500 })
     }
   }
 }
 
+
+
 export async function DELETE(request: Request) {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
-  
-    if (!id) {
-      return NextResponse.json({ error: 'Event ID is required' }, { status: 400 })
-    }
-  
-    try {
-      await prisma.event.delete({
-        where: { id },
-      })
-      return NextResponse.json({ message: 'Event deleted successfully' })
-    } catch (error) {
-      console.error('Error deleting event:', error)
-      return NextResponse.json({ error: 'Error deleting event' }, { status: 500 })
-    }
+  console.log("Starting DELETE operation")
+  const { searchParams } = new URL(request.url)
+  const id = searchParams.get('id')
+
+  console.log("Received ID:", id)
+
+  if (!id) {
+    return NextResponse.json({ error: 'Event ID is required' }, { status: 400 })
   }
+
+  try {
+    // First, find the event and its associated reminders
+    const targetEvent = await prisma.event.findUnique({
+      where: { id: id },
+      include: {
+        reminders: {
+          select: { id: true }
+        }
+      }
+    })
+
+    if (!targetEvent) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 })
+    }
+
+    // Delete associated reminders first
+    if (targetEvent.reminders.length > 0) {
+      await prisma.reminder.deleteMany({
+        where: {
+          id: {
+            in: targetEvent.reminders.map(reminder => reminder.id)
+          }
+        }
+      })
+      console.log("Associated reminders deleted")
+    }
+
+    // Now delete the event
+    const deletedEvent = await prisma.event.delete({
+      where: { id: id },
+    })
+
+    console.log("Deleted event:", deletedEvent)
+    return NextResponse.json({ message: 'Event and associated reminders deleted successfully' })
+  } catch (error) {
+    console.error("Error during delete operation:", error)
+    return NextResponse.json({ error: 'Error deleting event and reminders' }, { status: 500 })
+  }
+}
