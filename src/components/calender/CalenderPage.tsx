@@ -11,7 +11,7 @@ import EventForm from './event-form'
 import { toast } from '@/components/ui/use-toast'
 import { useSession } from 'next-auth/react'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { format, subMinutes, addMinutes, parseISO } from 'date-fns'
+import { format, subMinutes, parseISO } from 'date-fns'
 import { LoadingSpinner } from '../common/loading-spinner'
 
 interface Event {
